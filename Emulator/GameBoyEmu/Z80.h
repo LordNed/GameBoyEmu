@@ -1,7 +1,7 @@
 #pragma once
 #include "MMU.h"
 
-enum Flags : char
+enum Flags : unsigned char
 {
 	Zero = 0x80, //Last operation produced a result of zero
 	Operation = 0x40, //Last operation was a subtraction

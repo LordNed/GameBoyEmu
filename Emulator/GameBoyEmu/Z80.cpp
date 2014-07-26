@@ -66,13 +66,15 @@ void Z80::ExecuteInstruction(char instruction)
 		break;
 		/* Rotate A left with Carry */
 	case 0x07:
-		char ci = regA & Zero ? 1:0;
-		char co = regA & Zero ? Carry : 0;
-		regA = (regA << 1) + ci;
-		regA &= 0xFF;
-		flags = (flags&0xEF)+co;
-		regM = 1;
-		break;
+		{
+			char ci = regA & Zero ? 1:0;
+			char co = regA & Zero ? Carry : 0;
+			regA = (regA << 1) + ci;
+			regA &= 0xFF;
+			flags = (flags&0xEF)+co;
+			regM = 1;
+			break;
+		}
 		/* Save SP to given address */
 	case 0x08:
 		pMem->Write16(regSp, regPc);
@@ -81,6 +83,7 @@ void Z80::ExecuteInstruction(char instruction)
 		break;
 		/* Add 16-bit BC to HL */
 	case 0x09:
+		{
 		int hl = (regH << 8) + regL;
 		hl += (regB <<8)+regC;
 		if(hl > 0xFFFF)
@@ -91,6 +94,7 @@ void Z80::ExecuteInstruction(char instruction)
 		regL = hl&0xFF;
 		regM = 3;
 		break;
+		}
 		/* Load A from address pointed to by BC */
 	case 0xA:
 		regA = pMem->Read8((regB << 8) + regC);
@@ -125,6 +129,7 @@ void Z80::ExecuteInstruction(char instruction)
 		break;
 		/* Rotate A right with Carry */
 	case 0xF:
+		{
 		int ci = regA & 1 ? Zero : 0;
 		int co = regA & 1 ? Carry : 0;
 		regA = (regA >> 1) + ci; 
@@ -132,6 +137,7 @@ void Z80::ExecuteInstruction(char instruction)
 		flags = (flags & 0xEF)+co;
 		regM = 1;
 		break;
+		}
 		/* Stop Processor */
 	case 0x10:
 		printf("Stop Processor");
@@ -177,6 +183,7 @@ void Z80::ExecuteInstruction(char instruction)
 		break;
 		/* Rotate A left */
 	case 0x17:
+		{
 		int ci = flags & Carry ? 1 : 0;
 		int co = regA & Zero ? Carry : 0;
 		regA = (regA << 1) + ci; 
@@ -184,8 +191,10 @@ void Z80::ExecuteInstruction(char instruction)
 		flags = (flags & 0xEF)+co;
 		regM = 1;
 		break;
+		}
 		/* Relative jump by signed immediate */
 	case 0x18:
+		{
 		char i = pMem->Read8(regPc);
 		if(i > 127)
 			i =-((~i+1)&0xFF);
@@ -194,8 +203,10 @@ void Z80::ExecuteInstruction(char instruction)
 		regPc += i;
 		regM++;
 		break;
+		}
 		/* Add 16-bit DE to HL */
 	case 0x19:
+		{
 		int hl = (regH << 8) + regL;
 		hl += (regD <<8)+regE;
 		if(hl > 0xFFFF)
@@ -206,6 +217,7 @@ void Z80::ExecuteInstruction(char instruction)
 		regL = hl&0xFF;
 		regM = 3;
 		break;
+		}
 		/* Load A from address pointed to by DE */
 	case 0x1A:
 		regA = pMem->Read8((regD << 8) + regE);
@@ -240,6 +252,7 @@ void Z80::ExecuteInstruction(char instruction)
 		break;
 		/* Rotate A right */
 	case 0x1F:
+		{
 		int ci = flags & Carry ? Zero : 0;
 		int co = regA & 1 ? Carry : 0;
 		regA = (regA >> 1) + ci;
@@ -247,8 +260,10 @@ void Z80::ExecuteInstruction(char instruction)
 		flags = (flags & 0xEF) + co;
 		regM = 1;
 		break;
+		}
 		/* Relative jump by signed immediate if last result was not zero */
 	case 0x20:
+		{
 		char i = pMem->Read8(regPc);
 		if(i > 127)
 			i= -((~i+1)&0xFF);
@@ -261,6 +276,7 @@ void Z80::ExecuteInstruction(char instruction)
 			regM++;
 		}
 		break;
+		}
 		/* Load 16-bit immediate into HL */
 	case 0x21:
 		regL = pMem->Read8(regPc);
@@ -305,6 +321,7 @@ void Z80::ExecuteInstruction(char instruction)
 		break;
 		/* Adjust A for BCD addition */
 	case 0x27:
+		{
 		char a = regA;
 		if((flags & HalfCarry) || ((regA & 15) > 9))
 			regA += 6;
@@ -316,8 +333,10 @@ void Z80::ExecuteInstruction(char instruction)
 		}
 		regM = 1;
 		break;
+		}
 		/* Relative jump by signed immediate if last result was zero */
 	case 0x28:
+		{
 		char i = pMem->Read8(regPc);
 		if(i>127)
 			i=-((~i+1)&0xFF);
@@ -329,8 +348,10 @@ void Z80::ExecuteInstruction(char instruction)
 			regM++;
 		}
 		break;
+		}
 		/* Add 16-bit HL to HL */
 	case 0x29:
+		{
 		int hl = (regH << 8) + regL;
 		hl+= (regH << 8) + regL;
 		if(hl > 0xFFFF)
@@ -341,6 +362,7 @@ void Z80::ExecuteInstruction(char instruction)
 		regL = hl&0xFF;
 		regM = 3;
 		break;
+		}
 		/* Load A from address pointed to by HL and increment HL */
 	case 0x2A:
 		regA = pMem->Read8((regH << 8) + regL);
