@@ -927,6 +927,72 @@ void Z80::ExecuteInstruction(char instruction)
 	case 0x8F:
 		AddRegistersAndCarry(regA, regA);
 		break;
+		/* Subtract B from A */
+	case 0x90:
+		SubtractRegisters(regB, regA);
+		break;
+		/* Subtract C from A */
+	case 0x91:
+		SubtractRegisters(regC, regA);
+		break;
+		/* Subtract D from A */
+	case 0x92:
+		SubtractRegisters(regD, regA);
+		break;
+		/* Subtract E from A */
+	case 0x93:
+		SubtractRegisters(regE, regA);
+		break;
+		/* Subtract H from A */
+	case 0x94:
+		SubtractRegisters(regH, regA);
+		break;
+		/* Subtract L from A */
+	case 0x95:
+		SubtractRegisters(regL, regA);
+		break;
+		/* Subtract value pointed by HL from A */
+	case 0x96:
+		SubtractRegisters(pMem->Read8((regH << 8) + regL), regA);
+		regM = 2;
+		break;
+		/* Subtract A from A */
+	case 0x97:
+		SubtractRegisters(regA, regA);
+		break;
+		/* Subtract B and carry flag from A */
+	case 0x98:
+		SubtractRegistersAndCarry(regB, regA);
+		break;
+		/* Subtract C and carry flag from A */
+	case 0x99:
+		SubtractRegistersAndCarry(regC, regA);
+		break;
+		/* Subtract D and carry flag from A*/
+	case 0x9A:
+		SubtractRegistersAndCarry(regD, regA);
+		break;
+		/* Subtract E and carry flag from A*/
+	case 0x9B:
+		SubtractRegistersAndCarry(regE, regA);
+		break;
+		/* Subtract H and carry flag from A*/
+	case 0x9C:
+		SubtractRegistersAndCarry(regH, regA);
+		break;
+		/* Subtract L and carry flag from A*/
+	case 0x9D:
+		SubtractRegistersAndCarry(regL, regA);
+		break;
+		/* Subtract value pointed by HL and carry flag from A */
+	case 0x9E:
+		SubtractRegistersAndCarry(pMem->Read8((regH << 8) + regL), regA);
+		regM = 2;
+		break;
+		/* Subtract A and carry flag from A */
+	case 0x9F:
+		SubtractRegistersAndCarry(regA, regA);
+		break;
 	}
 }
 
@@ -953,6 +1019,32 @@ void Z80::AddRegistersAndCarry(uint8_t add, uint8_t &to)
 	if(!to)
 		flags |= Zero;
 	if((to ^ add ^ a) & Carry)
+		flags |= HalfCarry;
+	regM = 1;
+}
+
+void Z80::SubtractRegisters(uint8_t sub, uint8_t &from)
+{
+	int a = from;
+	from -= sub;
+	flags = (from < 0x0) ? 0x50 : Operation;
+	from &= 0xFF;
+	if(!from)
+		flags |= Zero;
+	if((from ^ sub ^ a) & Carry)
+		flags = HalfCarry;
+	regM = 1;
+}
+
+//Not sure why this is a duplicate of the above, above may be wrong...
+void Z80::SubtractRegistersAndCarry(uint8_t sub, uint8_t &from)
+{
+	int a = from;
+	from -= sub;
+	flags = (from < 0) ? 0x50 : Operation;
+	if(!from)
+		flags |= Zero;
+	if((from ^ sub ^ a) & Carry)
 		flags |= HalfCarry;
 	regM = 1;
 }

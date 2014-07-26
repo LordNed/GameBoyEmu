@@ -33,5 +33,8 @@ private:
 	MMU *pMem;
 	void AddRegisters(uint8_t add, uint8_t &to);
 	void AddRegistersAndCarry(uint8_t add, uint8_t &to);
+
+	void SubtractRegisters(uint8_t sub, uint8_t &from);
+	void SubtractRegistersAndCarry(uint8_t sub, uint8_t &from);
 };
 
