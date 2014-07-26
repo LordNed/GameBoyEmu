@@ -21,5 +21,19 @@
     <ClCompile Include="GameBoyEmu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z80.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MMU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Z80.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MMU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

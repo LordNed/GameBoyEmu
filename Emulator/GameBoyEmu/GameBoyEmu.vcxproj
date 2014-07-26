@@ -80,6 +80,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameBoyEmu.cpp" />
+    <ClCompile Include="MMU.cpp" />
+    <ClCompile Include="Z80.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MMU.h" />
+    <ClInclude Include="Z80.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
