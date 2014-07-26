@@ -8,6 +8,14 @@ Z80::Z80(MMU *pMemory)
 	Reset();
 }
 
+void Z80::Update()
+{
+	uint8_t opCode = pMem->Read8(regPc);
+	regPc++;
+	ExecuteInstruction(opCode);
+	m_time += regM;
+}
+
 void Z80::Reset()
 {
 	m_time = 0;
@@ -18,7 +26,7 @@ void Z80::Reset()
 }
 
 
-void Z80::ExecuteInstruction(char instruction)
+void Z80::ExecuteInstruction(uint8_t instruction)
 {
 	switch(instruction)
 	{
@@ -68,8 +76,8 @@ void Z80::ExecuteInstruction(char instruction)
 		/* Rotate A left with Carry */
 	case 0x07:
 		{
-			char ci = regA & Zero ? 1:0;
-			char co = regA & Zero ? Carry : 0;
+			uint8_t ci = regA & Zero ? 1:0;
+			uint8_t co = regA & Zero ? Carry : 0;
 			regA = (regA << 1) + ci;
 			regA &= 0xFF;
 			flags = (flags&0xEF)+co;
@@ -196,7 +204,7 @@ void Z80::ExecuteInstruction(char instruction)
 		/* Relative jump by signed immediate */
 	case 0x18:
 		{
-		char i = pMem->Read8(regPc);
+		uint8_t i = pMem->Read8(regPc);
 		if(i > 127)
 			i =-((~i+1)&0xFF);
 		regPc++;
@@ -265,7 +273,7 @@ void Z80::ExecuteInstruction(char instruction)
 		/* Relative jump by signed immediate if last result was not zero */
 	case 0x20:
 		{
-		char i = pMem->Read8(regPc);
+		uint8_t i = pMem->Read8(regPc);
 		if(i > 127)
 			i= -((~i+1)&0xFF);
 		regPc++;
@@ -323,7 +331,7 @@ void Z80::ExecuteInstruction(char instruction)
 		/* Adjust A for BCD addition */
 	case 0x27:
 		{
-		char a = regA;
+		uint8_t a = regA;
 		if((flags & HalfCarry) || ((regA & 15) > 9))
 			regA += 6;
 		flags &= 0xEF;
@@ -338,7 +346,7 @@ void Z80::ExecuteInstruction(char instruction)
 		/* Relative jump by signed immediate if last result was zero */
 	case 0x28:
 		{
-		char i = pMem->Read8(regPc);
+		uint8_t i = pMem->Read8(regPc);
 		if(i>127)
 			i=-((~i+1)&0xFF);
 		regPc++;
@@ -408,7 +416,7 @@ void Z80::ExecuteInstruction(char instruction)
 		/* Relative jump by signed immediate if last result caused no carry */
 	case 0x30:
 		{
-			char i = pMem->Read8(regPc);
+			uint8_t i = pMem->Read8(regPc);
 			if(i>127)
 				i=-((~i+1)&0xFF);
 			regPc++;
@@ -493,16 +501,18 @@ void Z80::ExecuteInstruction(char instruction)
 		}
 		/* Add 16-bit SP to HL */
 	case 0x39:
-		uint16_t hl = (regH << 8) + regL;
-		hl += regSp;
-		if(hl > 0x65535)
-			flags |= Carry;
-		else
-			flags &= 0xEF;
-		regH = (hl >> 8)&0xFF;
-		regL = hl & 0xFF;
-		regM = 3;
-		break;
+		{
+			uint16_t hl = (regH << 8) + regL;
+			hl += regSp;
+			if(hl > 0x65535)
+				flags |= Carry;
+			else
+				flags &= 0xEF;
+			regH = (hl >> 8)&0xFF;
+			regL = hl & 0xFF;
+			regM = 3;
+			break;
+		}
 		/* Load A from address pointed to by HL, and decrement HL */
 	case 0x3A:
 		regA = pMem->Read8((regH << 8) + regL);
@@ -1222,7 +1232,7 @@ void Z80::ExecuteInstruction(char instruction)
 			uint8_t i = pMem->Read8(regPc);
 			regPc++;
 			regPc &= 0xFFFF;
-			printf("Call CB map index: %d", i);
+			printf("Call CB map index: %d\n", i);
 			break;
 		}
 		/* Call Routine at 16-bit location if last result was zero */
@@ -1243,6 +1253,10 @@ void Z80::ExecuteInstruction(char instruction)
 	case 0xCF:
 		Rsv();
 		CallRoutine(0x08);
+		break;
+
+	default:
+		printf("Unhandled opcode: %X\n", instruction);
 		break;
 	}
 }

@@ -16,7 +16,7 @@ public:
 	Z80(MMU *pMemory);
 
 	void Reset();
-	void ExecuteInstruction(char instruction);
+	void Update();
 
 	int m_time;
 
@@ -35,6 +35,8 @@ public:
 
 private:
 	MMU *pMem;
+
+	void ExecuteInstruction(uint8_t instruction);
 
 	void Rsv();
 	void Rrs();

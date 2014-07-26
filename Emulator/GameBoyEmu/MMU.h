@@ -1,15 +1,17 @@
 #pragma once
+#include <cstdint>
+
 class MMU
 {
 public:
 	MMU(void);
 
-	char Read8(short address);
-	short Read16(short address);
-	void Write8(char value, short address);
-	void Write16(short value, short address);
+	uint8_t Read8(uint16_t address);
+	uint16_t Read16(uint16_t address);
+	void Write8(uint8_t value, uint16_t address);
+	void Write16(uint16_t value, uint16_t address);
 
 private:
-	char *pMemory;
+	uint8_t *pMemory;
 };
 
