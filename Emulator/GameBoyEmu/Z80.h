@@ -54,5 +54,9 @@ private:
 
 	void CallRoutine(uint16_t address);
 	void CallRoutineIfZero(uint16_t address);
+	void NopWarn(uint8_t op);
+
+	void PopStack(uint8_t &intoA, uint8_t &intoB);
+	void PushStack(uint8_t pushA, uint8_t pushB);
 };
 

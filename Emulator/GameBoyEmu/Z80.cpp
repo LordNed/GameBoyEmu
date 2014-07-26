@@ -1254,11 +1254,316 @@ void Z80::ExecuteInstruction(uint8_t instruction)
 		Rsv();
 		CallRoutine(0x08);
 		break;
-
+		/* Return if last result caused no carry */
+	case 0xD0:
+		regM = 1;
+		if((flags & Carry) == 0x00)
+			regPc = pMem->Read16(regSp);
+		regSp+=2;
+		regM +=2;
+		break;
+		/* Pop 16-bit value from stack into DE */
+	case 0xD1:
+		regE = pMem->Read8(regSp);
+		regSp++;
+		regD = pMem->Read8(regSp);
+		regSp++;
+		regM = 3;
+		break;
+		/* Absolute jump to 16-bit location if last result caused no carry */
+	case 0xD2:
+		regM = 3;
+		if((flags & Carry) == 0)
+		{
+			regPc = pMem->Read16(regPc);
+			regM++;
+		}
+		else
+			regPc+=2;
+		break;
+		/* Operation Removed */
+	case 0xD3:
+		NopWarn(instruction);
+		break;
+		/* Call routine at 16-bit location if last result caused no carry */
+	case 0xD4:
+		regM = 3;
+		if((flags & Carry) == 0)
+		{
+			regSp -= 2;
+			pMem->Write8((regPc + 2) & 0xFF, regSp);
+			pMem->Write8((regPc + 2) >> 8, regSp + 1);
+			regPc = pMem->Read16(regPc);
+			regM +=2;
+		}
+		else
+			regPc +=2;
+		break;
+		/* Push 16-bit DE onto stack */
+	case 0xD5:
+		regSp--;
+		pMem->Write8(regD, regSp);
+		regSp--;
+		pMem->Write8(regE, regSp);
+		regM = 3;
+		break;
+		/* Subtract 8-bit immediate from A */
+	case 0xD6:
+		SubtractRegisters(pMem->Read8(regPc), regA);
+		regM = 2;
+		break;
+		/* Call routine at address 0x10 */
+	case 0xD7:
+		Rsv();
+		CallRoutine(0x10);
+		break;
+		/* Return if last result caused carry */
+	case 0xD8:
+		regM = 1;
+		if((flags & Carry) == Carry)
+			regPc = pMem->Read16(regSp);
+		regSp+=2;
+		regM +=2;
+		break;
+		/* Enable interrupts and return to calling routine */
+	case 0xD9:
+		printf("[Unhandled] Enable interrupts, return to call routine.\n");
+		break;
+		/* Absolute jump to 16-bit location if last result caused carry */
+	case 0xDA:
+		regM = 3;
+		if((flags & Carry) == Carry)
+		{
+			regPc = pMem->Read16(regPc);
+			regM++;
+		}
+		else
+			regPc+=2;
+		break;
+		/* Operation Removed*/
+	case 0xDB:
+		NopWarn(instruction);
+		break;
+		/* Call routine at 16-bit location if last result caused carry */
+	case 0xDC:
+		regM = 3;
+		if((flags & Carry) == Carry)
+		{
+			regSp -= 2;
+			pMem->Write8((regPc + 2) & 0xFF, regSp);
+			pMem->Write8((regPc + 2) >> 8, regSp + 1);
+			regPc = pMem->Read16(regPc);
+			regM +=2;
+		}
+		else
+			regPc +=2;
+		break;
+		/* Operation Removed */
+	case 0xDD:
+		NopWarn(instruction);
+		break;
+		/* Subtract 8-bit immediate and carry from A */
+	case 0xDE:
+		SubtractRegistersAndCarry(pMem->Read8(regPc), regA);
+		regM = 2;
+		break;
+		/* Call routine at address 0x18 */
+	case 0xDF:
+		Rsv();
+		CallRoutine(0x18);
+		break;
+		/* Save A at address pointed to by (0xFF00 + 8-bit immediate) */
+	case 0xE0:
+		pMem->Write8(regA, 0xFF00 + pMem->Read8(regPc));
+		regPc++;
+		regM = 3;
+		break;
+		/* Pop 16-bit value from stack onto HL */
+	case 0xE1:
+		PopStack(regH, regL);
+		break;
+		/* Save A at address pointed to by (0xFF00 + regC) */
+	case 0xE2:
+		pMem->Write8(regA, 0xFF00 + regC);
+		regPc++;
+		regM = 3;
+		break;
+		/* Operation Removed */
+	case 0xE3:
+		NopWarn(instruction);
+		break;
+		/* Operation Removed */
+	case 0xE4:
+		NopWarn(instruction);
+		break;
+		/* Push 16-bit HL onto stack */
+	case 0xE5:
+		PushStack(regH, regL);
+		break;
+		/* Logical AND 8-bit immediate against A */
+	case 0xE6:
+		AndRegisters(pMem->Read8(regSp), regA);
+		regM = 2;
+		break;
+		/* Call routine at address 0x0020 */
+	case 0xE7:
+		Rsv();
+		CallRoutine(0x0020);
+		break;
+		/* Add signed 8-bit immediate to SP */
+	case 0xE8:
+		{
+			uint8_t i = pMem->Read8(regPc);
+			if(i > 127)
+				i= -((~i+1)&0xFF);
+			regPc++;
+			regSp += i;
+			regM = 4;
+			break;
+		}
+		/* Jump to 16-bit value pointed by HL */
+	case 0xE9:
+		regPc = pMem->Read16((regH << 8) + regL);
+		regM = 1;
+		break;
+		/* Save A at given 16-bit address */
+	case 0xEA:
+		pMem->Write8(regA, pMem->Read16(regPc));
+		regPc += 2;
+		regM = 4;
+		break;
+		/* Operation Removed */
+	case 0xEB:
+		NopWarn(instruction);
+		break;
+		/* Operation Removed */
+	case 0xEC:
+		NopWarn(instruction);
+		break;
+		/* Operation Removed */
+	case 0xED:
+		NopWarn(instruction);
+		break;
+		/* Logical XOR 8-bit immediate against A */
+	case 0xEE:
+		XorRegisters(pMem->Read8(regPc), regA);
+		regPc++;
+		regM = 2;
+		break;
+		/* Call routine at address 0x0028 */
+	case 0xEF:
+		Rsv();
+		CallRoutine(0x0028);
+		break;
+		/* Load A from address pointed to by (0xFF00 + 8-bit immediate) */
+	case 0xF0:
+		regA = pMem->Read8(0xFF00 + pMem->Read8(regPc));
+		regPc++;
+		regM = 3;
+		break;
+		/* Pop 16-bit value from stack into AF */
+	case 0xF1:
+		PopStack(regA, flags);
+		break;
+		/* Operation Removed */
+	case 0xF2:
+		NopWarn(instruction);
+		break;
+		/* Disable Interrupts */
+	case 0xF3:
+		printf("[Unhandled] Disable interrupts.");
+		break;
+		/* Operation Removed */
+	case 0xF4:
+		NopWarn(instruction);
+		break;
+		/* Push 16-bit AF onto stack */
+	case 0xF5:
+		PushStack(regA, flags);
+		break;
+		/*Logical OR 8-bit immediate against A */
+	case 0xF6:
+		XorRegisters(pMem->Read8(regPc), regA);
+		regPc++;
+		regM = 3;
+		break;
+		/* Call routine at address 0x0030 */
+	case 0xF7:
+		Rsv();
+		CallRoutine(0x0030);
+		break;
+		/* Add signed 8-bit immediate to SP and save result in HL */
+	case 0xF8:
+		{
+			uint8_t i = pMem->Read8(regPc);
+			if(i > 127)
+				i= -((~i+1)&0xFF);
+			regPc++;
+			i+= regSp;
+			regH = (i >> 8) & 0xFF;
+			regL = i & 0xFF;
+			regM = 3;
+			break;
+		}
+		/* Copy HL to SP */
+	case 0xF9:
+		printf("[Warn] Not sure this opcode should exist.");
+		regSp = (regH << 8) + regL;
+		regM = 1;
+		break;
+		/* Load A from given 16-bit address */
+	case 0xFA:
+		regA = pMem->Read8(pMem->Read16(regPc));
+		regPc  += 2;
+		regM = 4;
+		break;
+		/* Enable Interrupts */
+	case 0xFB:
+		printf("[Unhandled] Enable interrupts.");
+		break;
+		/* Operation Removed */
+	case 0xFC:
+	case 0xFD:
+		NopWarn(instruction);
+		break;
+		/* Compare 8-bit immediate against A */
+	case 0xFE:
+		CompareRegisters(pMem->Read8(regPc), regA);
+		regPc++;
+		regM = 3;
+		break;
+		/* Call routine at address 0x0038 */
+	case 0xFF:
+		Rsv();
+		CallRoutine(0x0038);
+		break;
 	default:
 		printf("Unhandled opcode: %X\n", instruction);
 		break;
 	}
+}
+
+void Z80::PushStack(uint8_t pushA, uint8_t pushB)
+{
+	regSp--;
+	pMem->Write8(pushA, regSp);
+	regSp--;
+	pMem->Write8(pushB, regSp);
+	regM = 3;
+}
+
+void Z80::PopStack(uint8_t &intoA, uint8_t &intoB)
+{
+	intoB = pMem->Read8(regSp);
+	regSp++;
+	intoA = pMem->Read8(regSp);
+	regSp++;
+	regM = 3;
+}
+
+void Z80::NopWarn(uint8_t op)
+{
+	printf("Removed opcode found, why? %X\n", op);
 }
 
 void Z80::CallRoutine(uint16_t address)
