@@ -993,6 +993,138 @@ void Z80::ExecuteInstruction(char instruction)
 	case 0x9F:
 		SubtractRegistersAndCarry(regA, regA);
 		break;
+		/* Logical AND B against A */
+	case 0xA0:
+		AndRegisters(regB, regA);
+		break;
+		/* Logical AND C against A */
+	case 0xA1:
+		AndRegisters(regC, regA);
+		break;
+		/* Logical AND D against A */
+	case 0xA2:
+		AndRegisters(regD, regA);
+		break;
+		/* Logical AND E against A */
+	case 0xA3:
+		AndRegisters(regE, regA);
+		break;
+		/* Logical AND H against A */
+	case 0xA4:
+		AndRegisters(regH, regA);
+		break;
+		/* Logical AND L against A */
+	case 0xA5:
+		AndRegisters(regL, regA);
+		break;
+		/* Logical AND value pointed by HL against A */
+	case 0xA6:
+		AndRegisters(pMem->Read8((regH << 8) + regL), regA);
+		regM = 2;
+		break;
+		/* Logical AND A against A */
+	case 0xA7:
+		AndRegisters(regA, regA);
+		break;
+		/* Logical XOR B against A */
+	case 0xA8:
+		XorRegisters(regB, regA);
+		break;
+		/* Logical XOR C against A */
+	case 0xA9:
+		XorRegisters(regC, regA);
+		break;
+		/* Logical XOR D against A */
+	case 0xAA:
+		XorRegisters(regD, regA);
+		break;
+		/* Logical XOR E against A */
+	case 0xAB:
+		XorRegisters(regE, regA);
+		break;
+		/* Logical XOR H against A */
+	case 0xAC:
+		XorRegisters(regH, regA);
+		break;
+		/* Logical XOR L against A */
+	case 0xAD:
+		XorRegisters(regL, regA);
+		break;
+		/* Logical XOR value pointed by HL against A */
+	case 0xAE:
+		XorRegisters(pMem->Read8((regH << 8) + regL), regA);
+		regM = 2;
+		break;
+		/* Logical XOR A against A */
+	case 0xAF:
+		XorRegisters(regA, regA);
+		break;
+		/* Logical OR B against A */
+	case 0xB0:
+		OrRegisters(regB, regA);
+		break;
+		/* Logical OR C against A */
+	case 0xB1:
+		OrRegisters(regC, regA);
+		break;
+		/* Logical OR D against A */
+	case 0xB2:
+		OrRegisters(regD, regA);
+		break;
+		/* Logical OR E against A */
+	case 0xB3:
+		OrRegisters(regE, regA);
+		break;
+		/* Logical OR H against A */
+	case 0xB4:
+		OrRegisters(regH, regA);
+		break;
+		/* Logical OR L against A */
+	case 0xB5:
+		OrRegisters(regL, regA);
+		break;
+		/* Logical OR value pointed by HL against A */
+	case 0xB6:
+		OrRegisters(pMem->Read8((regH << 8) + regL), regA);
+		break;
+		/* Logical OR A against A */
+	case 0xB7:
+		OrRegisters(regA, regA);
+		break;
+		/* Compare B against A*/
+	case 0xB8:
+		CompareRegisters(regB, regA);
+		break;
+		/* Compare C against A*/
+	case 0xB9:
+		CompareRegisters(regC, regA);
+		break;
+		/* Compare D against A*/
+	case 0xBA:
+		CompareRegisters(regD, regA);
+		break;
+		/* Compare E against A*/
+	case 0xBB:
+		CompareRegisters(regE, regA);
+		break;
+		/* Compare H against A*/
+	case 0xBC:
+		CompareRegisters(regH, regA);
+		break;
+		/* Compare L against A*/
+	case 0xBD:
+		CompareRegisters(regL, regA);
+		break;
+		/* Compare value pointed by HL against A*/
+	case 0xBE:
+		CompareRegisters(pMem->Read8((regH << 8) + regL), regA);
+		regM = 2;
+		break;
+		/* Compare A against A*/
+	case 0xBF:
+		CompareRegisters(regA, regA);
+		break;
+
 	}
 }
 
@@ -1046,5 +1178,42 @@ void Z80::SubtractRegistersAndCarry(uint8_t sub, uint8_t &from)
 		flags |= Zero;
 	if((from ^ sub ^ a) & Carry)
 		flags |= HalfCarry;
+	regM = 1;
+}
+
+void Z80::AndRegisters(uint8_t from, uint8_t &against)
+{
+	against &= from;
+	against &= 0xFF;
+	flags = against ? 0 : Zero;
+	regM = 1;
+}
+
+void Z80::XorRegisters(uint8_t from, uint8_t &against)
+{
+	against ^= from;
+	against &= 0xFF;
+	flags = against ? 0 : Zero;
+	regM = 1;
+}
+
+void Z80::OrRegisters(uint8_t from, uint8_t &against)
+{
+	against |= from;
+	against &= 0xFF;
+	flags = against ? 0 : Zero;
+	regM = 1;
+}
+
+void Z80::CompareRegisters(uint8_t reg, uint8_t against)
+{
+	int i = against;
+	i -= reg;
+	flags = (i < 0) ? 0x50:Operation;
+	if(!i)
+		flags |= Zero;
+	if((reg ^ against ^ i) & Carry)
+		flags |= HalfCarry;
+
 	regM = 1;
 }

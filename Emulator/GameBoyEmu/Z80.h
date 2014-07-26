@@ -36,5 +36,10 @@ private:
 
 	void SubtractRegisters(uint8_t sub, uint8_t &from);
 	void SubtractRegistersAndCarry(uint8_t sub, uint8_t &from);
+
+	void AndRegisters(uint8_t from, uint8_t &against);
+	void XorRegisters(uint8_t from, uint8_t &against);
+	void OrRegisters(uint8_t from, uint8_t &against);
+	void CompareRegisters(uint8_t reg, uint8_t &against);
 };
 
