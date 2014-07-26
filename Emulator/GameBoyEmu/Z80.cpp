@@ -782,6 +782,177 @@ void Z80::ExecuteInstruction(char instruction)
 		regL = regA;
 		regM = 1;
 		break;
+		/* Copy B to address pointed by HL */
+	case 0x70:
+		pMem->Write8(regB, (regH << 8) + regL);
+		regM = 2;
+		break;
+		/* Copy C to address pointed by HL */
+	case 0x71:
+		pMem->Write8(regC, (regH << 8) + regL);
+		regM = 2;
+		break;
+		/* Copy D to address pointed by HL */
+	case 0x72:
+		pMem->Write8(regD, (regH << 8) + regL);
+		regM = 2;
+		break;
+		/* Copy E to address pointed by HL */
+	case 0x73:
+		pMem->Write8(regE, (regH << 8) + regL);
+		regM = 2;
+		break;
+		/* Copy H to address pointed by HL */
+	case 0x74:
+		pMem->Write8(regH, (regH << 8) + regL);
+		regM = 2;
+		break;
+		/* Copy L to address pointed by HL */
+	case 0x75:
+		pMem->Write8(regL, (regH << 8) + regL);
+		regM = 2;
+		break;
+		/* HALT */
+	case 0x76:
+			printf("HALT");
+			break;
+		/* Copy A to address pointed by HL */
+	case 0x77:
+		pMem->Write8(regA, (regH << 8) + regL);
+		regM = 2;
+		break;
+		/* Copy B to A */
+	case 0x78:
+		regA = regB;
+		regM = 1;
+		break;
+		/* Copy C to A */
+	case 0x79:
+		regA = regC;
+		regM = 1;
+		break;
+		/* Copy D to A */
+	case 0x7A:
+		regA = regD;
+		regM = 1;
+		break;
+		/* Copy E to A */
+	case 0x7B:
+		regA = regE;
+		regM = 1;
+		break;
+		/* Copy H to A */
+	case 0x7C:
+		regA = regH;
+		regM = 1;
+		break;
+		/* Copy L to A */
+	case 0x7D:
+		regA = regL;
+		regM = 1;
+		break;
+		/* Copy value pointed by HL to A */
+	case 0x7E:
+		regA = pMem->Read8((regH << 8) + regL);
+		regM = 2;
+		break;
+		/* Copy A to A */
+	case 0x7F:
+		regA = regA;
+		regM = 1;
+		break;
+		/*Add B to A */
+	case 0x80:
+		AddRegisters(regB, regA);
+		break;
+		/* Add C to A */
+	case 0x81:
+		AddRegisters(regC, regA);
+		break;
+		/* Add D to A */
+	case 0x82:
+		AddRegisters(regD, regA);
+		break;
+		/* Add  E to A */
+	case 0x83:
+		AddRegisters(regE, regA);
+		break;
+		/* Add H to A */
+	case 0x84:
+		AddRegisters(regH, regA);
+		break;
+		/* Add L to A */
+	case 0x85:
+		AddRegisters(regL, regA);
+		break;
+		/* Add value pointed by HL to A*/
+	case 0x86:
+		AddRegisters(pMem->Read8((regH << 8) + regL), regA);
+		regM =2;
+		break;
+		/* Add A to A */
+	case 0x87:
+		AddRegisters(regA, regA);
+		break;
+		/* Add B and carry flag to A */
+	case 0x88:
+		AddRegistersAndCarry(regB, regA);
+		break;
+		/* Add C and carry flag to A */
+	case 0x89:
+		AddRegistersAndCarry(regC, regA);
+		break;
+		/* Add D and carry flag to A */
+	case 0x8A:
+		AddRegistersAndCarry(regD, regA);
+		break;
+		/* Add E and carry flag to A */
+	case 0x8B:
+		AddRegistersAndCarry(regE, regA);
+		break;
+		/* Add H and carry flag to A */
+	case 0x8C:
+		AddRegistersAndCarry(regH, regA);
+		break;
+		/* Add and carry flag L to A */
+	case 0x8D:
+		AddRegistersAndCarry(regL, regA);
+		break;
+		/* Add value pointed by HL and carry flag to A */
+	case 0x8E:
+		AddRegistersAndCarry(pMem->Read8((regH << 8) + regL), regA);
+		regM = 2;
+		break;
+		/* Add A and carry flag to A */
+	case 0x8F:
+		AddRegistersAndCarry(regA, regA);
+		break;
 	}
+}
 
+void Z80::AddRegisters(uint8_t add, uint8_t &to)
+{
+	int a = to;
+	to += add;
+	flags = (to > 0xFF) ? Carry : 0;
+	to &= 0xFF;
+	if(!to)
+		flags |= Zero;
+	if((to ^ add ^ a) & Carry)
+		flags = Carry;
+	regM = 1;
+}
+
+void Z80::AddRegistersAndCarry(uint8_t add, uint8_t &to)
+{
+	int a = to;
+	to += add;
+	to += (flags & Carry) ? 1 : 0;
+	flags = (to > 0xFF) ? Carry : 0;
+	to &= 0xFF;
+	if(!to)
+		flags |= Zero;
+	if((to ^ add ^ a) & Carry)
+		flags |= HalfCarry;
+	regM = 1;
 }
