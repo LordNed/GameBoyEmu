@@ -702,7 +702,86 @@ void Z80::ExecuteInstruction(char instruction)
 		regE = regA;
 		regM = 1;
 		break;
-
+		/* Copy B to H*/
+	case 0x60:
+		regH = regB;
+		regM = 1;
+		break;
+		/* Copy C to H */
+	case 0x61:
+		regH = regC;
+		regM = 1;
+		break;
+		/* Copy D to H */
+	case 0x62:
+		regH = regD;
+		regM = 1;
+		break;
+		/* Copy E to H */
+	case 0x63:
+		regH = regE;
+		regM = 1;
+		break;
+		/* Copy H to H */
+	case 0x64:
+		regH = regH;
+		regM = 1;
+		break;
+		/* Copy L to H */
+	case 0x65:
+		regH = regL;
+		regM = 1;
+		break;
+		/* Copy value pointed by HL to H */
+	case 0x66:
+		regH = pMem->Read8((regH << 8) + regL);
+		regM = 2;
+		break;
+		/* Copy A to H */
+	case 0x67:
+		regH = regA;
+		regM = 1;
+		break;
+		/* Copy B to L */
+	case 0x68:
+		regL = regB;
+		regM = 1;
+		break;
+		/* Copy C to L */
+	case 0x69:
+		regL = regC;
+		regM = 1;
+		break;
+		/* Copy D to L */
+	case 0x6A:
+		regL = regD;
+		regM = 1;
+		break;
+		/* Copy E to L */
+	case 0x6B:
+		regL = regE;
+		regM = 1;
+		break;
+		/* Copy H to L */
+	case 0x6C:
+		regL = regH;
+		regM = 1;
+		break;
+		/* Copy L to L */
+	case 0x6D:
+		regL = regL;
+		regM = 1;
+		break;
+		/* Copy value pointed by HL to L */
+	case 0x6E:
+		regL = pMem->Read8((regH << 8) + regL);
+		regM = 2;
+		break;
+		/* Copy A to L */
+	case 0x6F:
+		regL = regA;
+		regM = 1;
+		break;
 	}
 
 }
