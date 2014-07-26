@@ -1,5 +1,6 @@
 #include "Z80.h"
 #include <stdio.h>
+#include <cstdint>
 
 Z80::Z80(MMU *pMemory)
 {
@@ -402,6 +403,143 @@ void Z80::ExecuteInstruction(char instruction)
 	case 0x2F:
 		regA ^= 0xFF;
 		flags = regA ? 0 : Zero;
+		regM = 1;
+		break;
+		/* Relative jump by signed immediate if last result caused no carry */
+	case 0x30:
+		{
+			char i = pMem->Read8(regPc);
+			if(i>127)
+				i=-((~i+1)&0xFF);
+			regPc++;
+			regM = 2;
+			if((flags & Carry) == 0)
+			{
+				regPc += i;
+				regM++;
+			}
+			break;
+		}
+		/* Load 16-bit immediate into SP */
+	case 0x31:
+		regSp = pMem->Read16(regPc);
+		regPc+=2;
+		regM = 3;
+		break;
+		/* Save A to address pointed by HL and decrement HL */
+	case 0x32:
+		pMem->Write8(regA, (regH << 8) + regL);
+		regL = (regL-1)&0xFF;
+		if(!regL)
+			regH = (regH-1)&0xFF;
+		regM = 2;
+		break;
+		/* Increment 16-bit SP */
+	case 0x33:
+		regSp++;
+		regSp &= 0xFFFF;
+		regM = 1;
+		break;
+		/* Increment value pointed by HL */
+	case 0x34:
+		{
+			uint8_t i = pMem->Read8((regH << 8) + regL);
+			i++;
+			i&=0xFF;
+			pMem->Write8(i, (regH << 8) + regL);
+			flags = i ? 0 : Zero;
+			regM = 3;
+			break;
+		}
+		/* Decrement value pointed by HL */
+	case 0x35:
+		{
+			uint8_t i = pMem->Read8((regH << 8) + regL);
+			i--;
+			i&=0xFF;
+			pMem->Write8(i, (regH << 8) + regL);
+			flags = i ? 0 : Zero;
+			regM = 3;
+			break;
+		}
+		/* Load 8-bit immediate into address pointed by HL */
+	case 0x36:
+		{
+			uint8_t i = pMem->Read8(regPc);
+			pMem->Write8(i, (regH << 8) + regL);
+			regPc++;
+			regM = 3;
+			break;
+		}
+		/* Set carry flag */
+	case 0x37:
+		flags |= Carry;
+		regM = 1;
+		break;
+		/* Relative jump by signed immediate if last result caused carry */
+	case 0x38:
+		{
+			uint8_t i = pMem->Read8(regPc);
+			if(i>127)
+				i=-((~i+1)&0xFF);
+			regPc++;
+			regM = 2;
+			if((flags & Carry) == Carry)
+			{
+				regPc += i;
+				regM++;
+			}
+			break;
+		}
+		/* Add 16-bit SP to HL */
+	case 0x39:
+		uint16_t hl = (regH << 8) + regL;
+		hl += regSp;
+		if(hl > 0x65535)
+			flags |= Carry;
+		else
+			flags &= 0xEF;
+		regH = (hl >> 8)&0xFF;
+		regL = hl & 0xFF;
+		regM = 3;
+		break;
+		/* Load A from address pointed to by HL, and decrement HL */
+	case 0x3A:
+		regA = pMem->Read8((regH << 8) + regL);
+		regL = (regL-1)&0xFF;
+		if(!regL)
+			regH = (regH-1)&0xFF;
+		regM = 2;
+		break;
+		/* Decrement 16-bit SP */
+	case 0x3B:
+		regSp--;
+		regSp &= 0xFFFF;
+		regM = 1;
+		break;
+		/* Increment A */
+	case 0x3C:
+		regA++;
+		regA &= 0xFF;
+		flags = regA ? 0 : Zero;
+		regM = 1;
+		break;
+		/* Decrement A */
+	case 0x3D:
+		regA--;
+		regA &= 0xFF;
+		flags = regA ? 0 : Zero;
+		regM = 1;
+		break;
+		/* Load 8-bit immediate into A */
+	case 0x3E:
+		regA = pMem->Read8(regPc);
+		regPc++;
+		regM = 2;
+		break;
+		/* Clear Carry Flag */
+	case 0x3F:
+		flags &= ~Carry;
 		regM = 1;
 		break;
 	}
