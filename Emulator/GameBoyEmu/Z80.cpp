@@ -1124,8 +1124,177 @@ void Z80::ExecuteInstruction(char instruction)
 	case 0xBF:
 		CompareRegisters(regA, regA);
 		break;
-
+		/* Return if last result was not zero */
+	case 0xC0:
+		regM = 1;
+		if((flags & Zero) == 0x00)
+			regPc = pMem->Read16(regSp);
+		regSp+=2;
+		regM +=2;
+		break;
+		/* Pop 16-bit value from stack into BC */
+	case 0xC1:
+		regC = pMem->Read8(regSp);
+		regSp++;
+		regB = pMem->Read8(regSp);
+		regSp++;
+		regM = 3;
+		break;
+		/* Absolute jump to 16-bit location if last result was not zero */
+	case 0xC2:
+		regM = 3;
+		if((flags & Zero) == 0)
+		{
+			regPc = pMem->Read16(regPc);
+			regM++;
+		}
+		else
+			regPc+=2;
+		break;
+		/* Absolute jump to 16 bit location */
+	case 0xC3:
+		regPc = pMem->Read16(regPc);
+		regM = 3;
+		break;
+		/* Call routine at 16-bit location if last result was not zero */
+	case 0xC4:
+		regM = 3;
+		if((flags & Zero) == 0)
+		{
+			regSp -= 2;
+			pMem->Write8((regPc + 2) & 0xFF, regSp);
+			pMem->Write8((regPc + 2) >> 8, regSp + 1);
+			regPc = pMem->Read16(regPc);
+			regM +=2;
+		}
+		else
+			regPc +=2;
+		break;
+		/* Push 16-bit BC onto stack */
+	case 0xC5:
+		regSp--;
+		pMem->Write8(regB, regSp);
+		regSp--;
+		pMem->Write8(regC, regSp);
+		regM = 3;
+		break;
+		/* Add 8-bit immediate to A */
+	case 0xC6:
+		AddRegisters(pMem->Read8(regPc), regA);
+		regPc++;
+		regM = 2;
+		break;
+		/* Call routine at address 0x0000H */
+	case 0xC7:
+		Rsv();
+		CallRoutine(0x0000);
+		break;
+		/* Return if last result was zero */
+	case 0xC8:
+		regM = 1;
+		if((flags & Zero) == Zero)
+		{
+			regPc = pMem->Read16(regSp);
+			regSp+=2;
+			regM+=2;
+		}
+		break;
+		/* Return to calling routine */
+	case 0xC9:
+		regPc = pMem->Read16(regSp);
+		regSp += 2;
+		regM = 3;
+		break;
+		/* Absolute jump to 16-bit location if last result was zero */
+	case 0xCA:
+		regM = 3;
+		if((flags & Zero) == Zero)
+		{
+			regPc = pMem->Read16(regPc);
+			regM++;
+		}
+		else
+			regPc+=2;
+		break;
+		/* Extended operations (two-byte instruction code) */
+	case 0xCB:
+		{
+			uint8_t i = pMem->Read8(regPc);
+			regPc++;
+			regPc &= 0xFFFF;
+			printf("Call CB map index: %d", i);
+			break;
+		}
+		/* Call Routine at 16-bit location if last result was zero */
+	case 0xCC:
+		CallRoutineIfZero(pMem->Read16(regPc));
+		break;
+		/* Call Routine at 16-bit location */
+	case 0xCD:
+		CallRoutine(pMem->Read16(regPc));
+		regM = 5;
+		break;
+		/* Add 8-bit immediate and carry to A */
+	case 0xCE:
+		AddRegistersAndCarry(pMem->Read8(regPc), regA);
+		regM = 2;
+		break;
+		/* Call routine at address 0x08 */
+	case 0xCF:
+		Rsv();
+		CallRoutine(0x08);
+		break;
 	}
+}
+
+void Z80::CallRoutine(uint16_t address)
+{
+	regSp -= 2;
+	pMem->Write8(regPc & 0xFF, regSp);
+	pMem->Write8(regPc  >> 8, regSp + 1);
+	regPc = address;
+	regM = 3;
+}
+
+void Z80::CallRoutineIfZero(uint16_t address)
+{
+	regM = 3;
+	if((flags & Zero) == Zero)
+	{
+		regSp -= 2;
+		pMem->Write8(regPc & 0xFF, regSp);
+		pMem->Write8(regPc  >> 8, regSp + 1);
+		regPc = address;
+		regM += 2;
+	}
+	else
+	{
+		regPc += 2;
+	}
+}
+
+void Z80::Rsv()
+{
+	rsvA = regA;
+	rsvB = regB;
+	rsvC = regC;
+	rsvD = regD;
+	rsvE = regE;
+	rsvH = regH;
+	rsvL = regL;
+	rsvF = flags;
+}
+
+void Z80::Rrs()
+{
+	regA = rsvA;
+	regB = rsvB;
+	regC = rsvC;
+	regD = rsvD;
+	regE = rsvE;
+	regH = rsvH;
+	regL = rsvL;
+	flags = rsvF;
 }
 
 void Z80::AddRegisters(uint8_t add, uint8_t &to)

@@ -29,8 +29,16 @@ public:
 	//Each instruction is executed in steps that are usually termed machine cycles
 	//(M-cycles), each of which can take between three and six clock periods (T-cycles).
 	//Each m-cycle corresponds roughly to one memory access and/or internal operation.
+
+	/* Shadow Registers? */
+	uint8_t rsvA, rsvB, rsvC, rsvD, rsvE, rsvH, rsvL, rsvF;
+
 private:
 	MMU *pMem;
+
+	void Rsv();
+	void Rrs();
+
 	void AddRegisters(uint8_t add, uint8_t &to);
 	void AddRegistersAndCarry(uint8_t add, uint8_t &to);
 
@@ -40,6 +48,9 @@ private:
 	void AndRegisters(uint8_t from, uint8_t &against);
 	void XorRegisters(uint8_t from, uint8_t &against);
 	void OrRegisters(uint8_t from, uint8_t &against);
-	void CompareRegisters(uint8_t reg, uint8_t &against);
+	void CompareRegisters(uint8_t reg, uint8_t against);
+
+	void CallRoutine(uint16_t address);
+	void CallRoutineIfZero(uint16_t address);
 };
 
