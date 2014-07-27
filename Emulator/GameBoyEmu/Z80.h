@@ -58,5 +58,21 @@ private:
 
 	void PopStack(uint8_t &intoA, uint8_t &intoB);
 	void PushStack(uint8_t pushA, uint8_t pushB);
+
+	/* CB Instructions */
+	void ExecuteCBInstruction(uint8_t instruction);
+	uint8_t &RemapIndexToRegister(uint8_t index);
+
+	void RotateWithCarry(uint8_t &reg);
+	void RotateRightWithCarry(uint8_t &reg);
+	void RotateLeft(uint8_t &reg);
+	void RotateRight(uint8_t &reg);
+	void ShiftLeftPreservingSign(uint8_t &reg);
+	void ShiftRightPreservingSign(uint8_t &reg);
+	void SwapNybbles(uint8_t &reg);
+	void ShiftRight(uint8_t &reg);
+	void TestBit(uint8_t &reg, uint8_t bit);
+	void ClearBit(uint8_t &reg, uint8_t bit);
+	void SetBit(uint8_t &reg, uint8_t bit);
 };
 

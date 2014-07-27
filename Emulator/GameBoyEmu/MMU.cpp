@@ -1,6 +1,7 @@
 #include "MMU.h"
 #include <stdlib.h>
 #include <iostream>
+#include <fstream>
 
 MMU::MMU(void)
 {
@@ -28,6 +29,23 @@ MMU::MMU(void)
 	};
 
 	memcpy(pMemory, &bios, sizeof(bios));
+
+	FILE * rom = fopen("C:/Users/Matt/Documents/GitHub/GameBoyEmu/Emulator/Debug/opus5.gb", "rb");
+	fseek(rom, 0, SEEK_END);
+	long lSize = ftell(rom);
+	rewind(rom);
+
+	char * buffer = (char *) malloc(sizeof(char)*lSize);
+	fread(buffer, 1, lSize, rom);
+	fclose(rom);
+
+	memcpy(pMemory + 0x100, buffer, lSize);
+	delete buffer;
+}
+
+MMU::~MMU()
+{
+	delete pMemory;
 }
 
 uint8_t MMU::Read8(uint16_t address)

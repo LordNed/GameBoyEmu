@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
 	while(true)
 	{
 		pZ80->Update();
-		Sleep(100);
+		Sleep(50);
 	}
 	return 0;
 }

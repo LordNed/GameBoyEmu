@@ -1,6 +1,8 @@
 #include "Z80.h"
 #include <stdio.h>
 #include <cstdint>
+#include <Windows.h>
+#include <string>
 
 Z80::Z80(MMU *pMemory)
 {
@@ -14,6 +16,11 @@ void Z80::Update()
 	regPc++;
 	ExecuteInstruction(opCode);
 	m_time += regM;
+
+	char buff[100];
+	sprintf(buff, "Frame: %d", m_time);
+	std::string titleStr = buff;
+	SetConsoleTitle(titleStr.c_str());
 }
 
 void Z80::Reset()
@@ -87,6 +94,7 @@ void Z80::ExecuteInstruction(uint8_t instruction)
 		/* Save SP to given address */
 	case 0x08:
 		pMem->Write16(regSp, regPc);
+		
 		regM = 2;
 		printf("Huh?\n");
 		break;
@@ -1232,7 +1240,8 @@ void Z80::ExecuteInstruction(uint8_t instruction)
 			uint8_t i = pMem->Read8(regPc);
 			regPc++;
 			regPc &= 0xFFFF;
-			printf("Call CB map index: %d\n", i);
+			//printf("Call CB map index: %d\n", i);
+			ExecuteCBInstruction(i);
 			break;
 		}
 		/* Call Routine at 16-bit location if last result was zero */
@@ -1328,6 +1337,10 @@ void Z80::ExecuteInstruction(uint8_t instruction)
 		/* Enable interrupts and return to calling routine */
 	case 0xD9:
 		printf("[Unhandled] Enable interrupts, return to call routine.\n");
+		Rrs();
+		regPc = pMem->Read16(regSp);
+		regSp += 2;
+		regM = 3;
 		break;
 		/* Absolute jump to 16-bit location if last result caused carry */
 	case 0xDA:
@@ -1471,7 +1484,7 @@ void Z80::ExecuteInstruction(uint8_t instruction)
 		break;
 		/* Disable Interrupts */
 	case 0xF3:
-		printf("[Unhandled] Disable interrupts.");
+		printf("[Unhandled] Disable interrupts.\n");
 		break;
 		/* Operation Removed */
 	case 0xF4:
@@ -1507,7 +1520,7 @@ void Z80::ExecuteInstruction(uint8_t instruction)
 		}
 		/* Copy HL to SP */
 	case 0xF9:
-		printf("[Warn] Not sure this opcode should exist.");
+		printf("[Warn] Not sure this opcode should exist. [%d]\n", instruction);
 		regSp = (regH << 8) + regL;
 		regM = 1;
 		break;
@@ -1519,7 +1532,8 @@ void Z80::ExecuteInstruction(uint8_t instruction)
 		break;
 		/* Enable Interrupts */
 	case 0xFB:
-		printf("[Unhandled] Enable interrupts.");
+		printf("[Unhandled] Enable interrupts.\n");
+		regM = 1;
 		break;
 		/* Operation Removed */
 	case 0xFC:
@@ -1704,4 +1718,278 @@ void Z80::CompareRegisters(uint8_t reg, uint8_t against)
 		flags |= HalfCarry;
 
 	regM = 1;
+}
+
+
+void Z80::ExecuteCBInstruction(uint8_t instruction)
+{
+	//High five bits are opcode while lower 3 denote register.
+	uint8_t opCode = instruction & 0xF8;
+	uint8_t regIndex = instruction & 0x7;
+
+	uint8_t &reg = RemapIndexToRegister(regIndex);
+
+	switch(opCode)
+	{
+		/* Rotate with Carry */
+	case 0x0:
+		RotateWithCarry(reg);		
+		break;
+		/* Rotate Right with Carry */
+	case 0x8:
+		RotateRightWithCarry(reg);
+		break;
+		/* Rotate Left */
+	case 0x10:
+		RotateLeft(reg);
+		break;
+		/* Rotate Right */
+	case 0x18:
+		RotateRight(reg);
+		break;
+		/* Shift Left Preserving Sign */
+	case 0x20:
+		ShiftLeftPreservingSign(reg);
+		break;
+		/* Shift Right Preserving Sign */
+	case 0x28:
+		ShiftRightPreservingSign(reg);
+		break;
+		/* Swap nybbles */
+	case 0x30:
+		SwapNybbles(reg);
+		break;
+		/* Shift Right */
+	case 0x38:
+		ShiftRight(reg);
+		break;
+		/* Test Bit 0*/
+	case 0x40:
+		TestBit(reg, 0x01);
+		break;
+		/* Test Bit 1*/
+	case 0x48:
+		TestBit(reg, 0x02);
+		break;
+		/* Test Bit 2*/
+	case 0x50:
+		TestBit(reg, 0x04);
+		break;
+		/* Test Bit 3*/
+	case 0x58:
+		TestBit(reg, 0x08);
+		break;
+		/* Test Bit 4*/
+	case 0x60:
+		TestBit(reg, 0x10);
+		break;
+		/* Test Bit 5*/
+	case 0x68:
+		TestBit(reg, 0x20);
+		break;
+		/* Test Bit 6*/
+	case 0x70:
+		TestBit(reg, 0x40);
+		break;
+		/* Test Bit 7*/
+	case 0x78:
+		TestBit(reg, 0x80);
+		break;
+		/* Clear Bit 0*/
+	case 0x80:
+		ClearBit(reg, 0xFE);
+		break;
+		/* Clear Bit 1*/
+	case 0x88:
+		ClearBit(reg, 0xFD);
+		break;
+		/* Clear Bit 2*/
+	case 0x90:
+		ClearBit(reg, 0xFB);
+		break;
+		/* Clear Bit 3*/
+	case 0x98:
+		ClearBit(reg, 0xF7);
+		break;
+		/* Clear Bit 4*/
+	case 0xA0:
+		ClearBit(reg, 0xEF);
+		break;
+		/* Clear Bit 5*/
+	case 0xA8:
+		ClearBit(reg, 0xDF);
+		break;
+		/* Clear Bit 6*/
+	case 0xB0:
+		ClearBit(reg, 0xBF);
+		break;
+		/* Clear Bit 7*/
+	case 0xB8:
+		ClearBit(reg, 0x7F);
+		break;
+		/* Set Bit 0 */
+	case 0xC0:
+		SetBit(reg, 0x01);
+		break;
+		/* Set Bit 1 */
+	case 0xC8:
+		SetBit(reg, 0x02);
+		break;
+		/* Set Bit 2 */
+	case 0xD0:
+		SetBit(reg, 0x04);
+		break;
+		/* Set Bit 3 */
+	case 0xD8:
+		SetBit(reg, 0x08);
+		break;
+		/* Set Bit 4 */
+	case 0xE0:
+		SetBit(reg, 0x10);
+		break;
+		/* Set Bit 5 */
+	case 0xE8:
+		SetBit(reg, 0x20);
+		break;
+		/* Set Bit 6 */
+	case 0xF0:
+		SetBit(reg, 0x40);
+		break;
+		/* Set Bit 7 */
+	case 0xF8:
+		SetBit(reg, 0x80);
+		break;
+	default:
+		printf("[Unhandled] Unknown CB opcode %X\n", instruction);
+		break;
+	}
+}
+
+uint8_t &Z80::RemapIndexToRegister(uint8_t index)
+{
+	switch(index)
+	{
+	case 0:
+		return regB;
+	case 1:
+		return regC;
+	case 2:
+		return regD;
+	case 3:
+		return regE;
+	case 4:
+		return regH;
+	case 5:
+		return regL;
+	case 6:
+		//return pMem->Read8((regH << 8) + regL);
+		printf("to do...");
+		break;
+	case 7:
+		return regA;
+	}
+
+	printf("[Error] failed to remap index.");
+	uint8_t dummy;
+	return dummy;
+}
+
+void Z80::RotateWithCarry(uint8_t &reg)
+{
+	uint8_t ci = reg & Zero ? 1 : 0;
+	uint8_t co = reg & Zero ? Carry : 0;
+	reg = (reg << 1) + ci;
+	reg &= 0xFF;
+	flags = reg ? 0 : Zero;
+	flags = (flags & 0xEF)+ co;
+	regM = 2;
+}
+
+void Z80::RotateRightWithCarry(uint8_t &reg)
+{
+	uint8_t ci = reg & 1 ? Zero : 0;
+	uint8_t co = reg & 1 ? Carry : 0;
+	reg = (reg >> 1) + ci;
+	reg &= 0xFF;
+	flags = (reg) ? 0 : Zero;
+	flags = (flags & 0xEF) + co;
+	regM = 2;
+}
+
+void Z80::RotateLeft(uint8_t &reg)
+{
+	uint8_t ci = flags & Carry ? 1 : 0;
+	uint8_t co = reg & Zero ? Carry : 0;
+	reg = (reg << 1) + ci;
+	reg &= 0xFF;
+	flags = reg ? 0 : Zero;
+	flags = (flags & 0xEF) + co;
+	regM = 2;
+}
+
+void Z80::RotateRight(uint8_t &reg)
+{
+	uint8_t ci = flags & Carry ? Zero : 0;
+	uint8_t co = reg & 1 ? Carry : 0;
+	reg = (reg >> 1) + ci;
+	reg &= 0xFF;
+	flags = reg ? 0 : Zero;
+	flags = (flags & 0xEF) + co;
+	regM = 2;
+}
+
+void Z80::ShiftLeftPreservingSign(uint8_t &reg)
+{
+	uint8_t co = reg & Zero ? Carry : 0;
+	reg = (reg << 1) & 0xFF;
+	flags = reg ? 0 : Zero;
+	flags = (flags & 0xEF) + co;
+	regM = 2;
+}
+
+void Z80::ShiftRightPreservingSign(uint8_t &reg)
+{
+	uint8_t ci = reg & Zero;
+	uint8_t co = reg & 1 ? Carry : 0;
+	reg = ((reg >> 1) + ci) & 0xFF;
+	flags = reg ? 0 : Zero;
+	flags = (flags & 0xEF) + co;
+	regM = 2;
+}
+
+void Z80::SwapNybbles(uint8_t &reg)
+{
+	uint8_t tr = reg;
+	reg = ((tr & 0xF) << 4)|((tr&0xF0)>>4);
+	flags = reg ? 0 : Zero;
+	regM = 1;
+}
+
+void Z80::ShiftRight(uint8_t &reg)
+{
+	uint8_t co = reg & 1 ? Carry : 0;
+	reg = (reg >> 1) & 0xFF;
+	flags = reg ? 0 : Zero;
+	flags = (flags & 0xEF) + co;
+	regM = 2;
+}
+
+void Z80::TestBit(uint8_t &reg, uint8_t bit)
+{
+	flags &= 0x1F;
+	flags |= HalfCarry;
+	flags = (reg & bit) ? 0 : Zero;
+	regM = 2;
+}
+
+void Z80::ClearBit(uint8_t &reg, uint8_t bit)
+{
+	reg &= bit;
+	regM = 2;
+}
+
+void Z80::SetBit(uint8_t &reg, uint8_t bit)
+{
+	reg |= bit;
+	regM = 2;
 }
